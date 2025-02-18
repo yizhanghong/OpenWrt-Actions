@@ -8,7 +8,7 @@
     # <https://github.com/KFERMercer/OpenWrt-CI>
     # 
 
-    name: Deliver config Banana-Pi-BPI-R4-ci
+    name: Deliver config immortalwrt
 
 
     on:
@@ -40,9 +40,9 @@
       REPO_BRANCH: openwrt-24.10
       FEEDS_CONF: feeds.conf.default
       CONFIG_FILE: config/immortalwrt.info
-      Firmware_Name: immortalwrt-Banana-Pi-BPI-R4
-      DIY_P1_SH: smpackage/Banana-Pi-BPI-R4-1-1.sh
-      DIY_P2_SH: smpackage/Banana-Pi-BPI-R4-2-2.sh
+      Firmware_Name: immortalwrt
+      DIY_P1_SH: smpackage/immortalwrt-1.sh
+      DIY_P2_SH: smpackage/immortalwrt-2.sh
       UPLOAD_BIN_DIR: false
       UPLOAD_FIRMWARE: true
       UPLOAD_BUILDINFO: true
@@ -61,7 +61,7 @@
      #   container: node:16.16.0
      
      
-        name: Deliver config Banana-Pi-BPI-R4-ci
+        name: Deliver config immortalwrt
         
         if: github.event.repository.owner.id == github.event.sender.id
         
@@ -71,31 +71,20 @@
           env:
             DEBIAN_FRONTEND: noninteractive
           run: |
-            # docker rmi `docker images -q`
-            # sudo -E rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d /usr/local/lib/android
-            # sudo -E apt-mark hold grub-efi-amd64-signed
-            # sudo -E apt update
-            # sudo -E apt -y purge azure-cli* docker* ghc* zulu* llvm* firefox google* dotnet* powershell* openjdk* mysql* php* mongodb* dotnet* snap*
-            # sudo -E apt -y full-upgrade
-            # sudo -E apt -y install ack antlr3 aria2 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libreadline-dev libssl-dev libtool lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip libpython3-dev qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
-            # sudo -E apt -y install rename
-            # sudo -E systemctl daemon-reload
-            # sudo -E apt -y autoremove --purge
-            # sudo -E apt clean
-            # sudo -E timedatectl set-timezone "Asia/Shanghai"
-            # sudo mkdir -p /workdir
-            # sudo chown $USER:$GROUPS /workdir  
-            
-            sudo -E apt-get -qq update
-            sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.eu.org/init_build_environment.sh)'
+            docker rmi `docker images -q`
+            sudo -E rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d /usr/local/lib/android
+            sudo -E apt-mark hold grub-efi-amd64-signed
+            sudo -E apt update
+            sudo -E apt -y purge azure-cli* docker* ghc* zulu* llvm* firefox google* dotnet* powershell* openjdk* mysql* php* mongodb* dotnet* snap*
+            sudo -E apt -y full-upgrade
+            sudo -E apt -y install ack antlr3 aria2 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libreadline-dev libssl-dev libtool lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip libpython3-dev qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
             sudo -E apt -y install rename
-            sudo -E apt-get -qq autoremove --purge
-            sudo -E apt-get -qq clean
-            sudo rm -rf /etc/apt/sources.list.d/* /usr/local/lib/android /opt/ghc /usr/share/dotnet /usr/local/graalvm /usr/local/.ghcup \
-            /usr/local/share/powershell /usr/local/share/chromium /usr/local/lib/node_modules
-            sudo timedatectl set-timezone "$TZ"
+            sudo -E systemctl daemon-reload
+            sudo -E apt -y autoremove --purge
+            sudo -E apt clean
+            sudo -E timedatectl set-timezone "Asia/Shanghai"
             sudo mkdir -p /workdir
-            sudo chown $USER:$GROUPS $GITHUB_WORKSPACE /workdir
+            sudo chown $USER:$GROUPS /workdir  
 
         - name: 更新时区、编译时间
           id: date
@@ -117,16 +106,16 @@
           working-directory: /workdir
           run: |
             df -hT $PWD
-            git clone --depth 1 -b $REPO_BRANCH --single-branch $REPO_URL openwrt
+            git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
             ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
          
           
-        - name: patch1补丁和自定义设置
-          run: |
-            [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
-            chmod +x $DIY_P1_SH
-            cd openwrt
-            $GITHUB_WORKSPACE/$DIY_P1_SH
+        # - name: patch1补丁和自定义设置
+        #   run: |
+        #     [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
+        #     chmod +x $DIY_P1_SH
+        #     cd openwrt
+        #     $GITHUB_WORKSPACE/$DIY_P1_SH
             
 
         - name: 更新源 #Update feeds
@@ -135,13 +124,13 @@
         - name: 安装源 #Install feeds
           run: cd openwrt && ./scripts/feeds install -a
 
-        - name: patch2补丁和自定义设置
-          run: |
-            [ -e files ] && mv files openwrt/files
-            [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-            chmod +x $DIY_P2_SH
-            cd openwrt
-            $GITHUB_WORKSPACE/$DIY_P2_SH
+        # - name: patch2补丁和自定义设置
+        #   run: |
+        #     [ -e files ] && mv files openwrt/files
+        #     [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        #     chmod +x $DIY_P2_SH
+        #     cd openwrt
+        #     $GITHUB_WORKSPACE/$DIY_P2_SH
             
         - name: Generate configuration file
           run: |
@@ -156,50 +145,50 @@
             TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
             TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
-        # - name: 输出编译信息
-        #   run: |
-        #     cd openwrt
-        #     echo " 系统空间      类型   总数  已用  可用 使用率"
-        #     df -hT $PWD
+        - name: 输出编译信息
+          run: |
+            cd openwrt
+            echo " 系统空间      类型   总数  已用  可用 使用率"
+            df -hT $PWD
             
-        #     echo
-        #     echo "=========================================="
-        #     echo
+            echo
+            echo "=========================================="
+            echo
     
-        #     ZZZ="package/lean/default-settings/files/zzz-default-settings"
-        #     echo "DISTRIB_REVISION=$(cat $ZZZ|grep DISTRIB_REVISION= | sed 's/^.\{24\}//g' | sed 's/.\{26\}$//')" >> $GITHUB_ENV
-        #     echo "KERNEL_PATCHVER=$(cat target/linux/x86/Makefile|grep KERNEL_PATCHVER | sed 's/^.\{17\}//g')" >> $GITHUB_ENV
-        #     echo "	    当前编译版本：$(cat $ZZZ|grep DISTRIB_REVISION= | sed 's/^.\{24\}//g' | sed 's/.\{26\}$//')"
-        #     echo "	    内核版本：$(cat target/linux/x86/Makefile|grep KERNEL_PATCHVER | sed 's/^.\{17\}//g')"
+            ZZZ="package/lean/default-settings/files/zzz-default-settings"
+            echo "DISTRIB_REVISION=$(cat $ZZZ|grep DISTRIB_REVISION= | sed 's/^.\{24\}//g' | sed 's/.\{26\}$//')" >> $GITHUB_ENV
+            echo "KERNEL_PATCHVER=$(cat target/linux/x86/Makefile|grep KERNEL_PATCHVER | sed 's/^.\{17\}//g')" >> $GITHUB_ENV
+            echo "	    当前编译版本：$(cat $ZZZ|grep DISTRIB_REVISION= | sed 's/^.\{24\}//g' | sed 's/.\{26\}$//')"
+            echo "	    内核版本：$(cat target/linux/x86/Makefile|grep KERNEL_PATCHVER | sed 's/^.\{17\}//g')"
     
-        #     echo
-        #     echo "=========================================="
+            echo
+            echo "=========================================="
     
-        #     grep -i CONFIG_PACKAGE_luci-app .config | grep  -v \# > Plug-in
-        #     grep -i CONFIG_PACKAGE_luci-theme .config | grep  -v \# >> Plug-in
-        #     sed -i '/INCLUDE/d' Plug-in > /dev/null 2>&1
-        #     sed -i 's/CONFIG_PACKAGE_/、/g' Plug-in
-        #     sed -i '/Transparent_Proxy/d' Plug-in > /dev/null 2>&1 #排除 luci-app-passwall_Transparent_Proxy
-        #     sed -i '/qbittorrent-simple_dynamic/d' Plug-in > /dev/null 2>&1 #排除 luci-app-qbittorrent-simple_dynamic
-        #     sed -i 's/=y/\ /g' Plug-in
-        #     awk '$0=NR$0' Plug-in > Plug-2
-        #     awk '{print "	" $0}' Plug-2 > Plug-in
+            grep -i CONFIG_PACKAGE_luci-app .config | grep  -v \# > Plug-in
+            grep -i CONFIG_PACKAGE_luci-theme .config | grep  -v \# >> Plug-in
+            sed -i '/INCLUDE/d' Plug-in > /dev/null 2>&1
+            sed -i 's/CONFIG_PACKAGE_/、/g' Plug-in
+            sed -i '/Transparent_Proxy/d' Plug-in > /dev/null 2>&1 #排除 luci-app-passwall_Transparent_Proxy
+            sed -i '/qbittorrent-simple_dynamic/d' Plug-in > /dev/null 2>&1 #排除 luci-app-qbittorrent-simple_dynamic
+            sed -i 's/=y/\ /g' Plug-in
+            awk '$0=NR$0' Plug-in > Plug-2
+            awk '{print "	" $0}' Plug-2 > Plug-in
     
-        #     echo
-        #     echo
-        #     echo "	      已选插件列表"
-        #     cat Plug-in
-        #     rm -rf {Plug-in,Plug-2}
+            echo
+            echo
+            echo "	      已选插件列表"
+            cat Plug-in
+            rm -rf {Plug-in,Plug-2}
     
-        #     echo
-        #     echo "=========================================="
+            echo
+            echo "=========================================="
     
-        #     echo
-        #     echo
-        #     echo "输出完整插件信息..."
-        #     echo
-        #     echo
-        #     cat .config
+            echo
+            echo
+            echo "输出完整插件信息..."
+            echo
+            echo
+            cat .config
 
       
         - name: Prepare artifact
