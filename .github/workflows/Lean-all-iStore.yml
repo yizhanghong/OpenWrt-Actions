@@ -9,7 +9,7 @@
 name: Lean-all-iStore
 
 on:
-  schedule:
+  #schedule:
   #  - cron: 0 22 * * *
 
   release:
